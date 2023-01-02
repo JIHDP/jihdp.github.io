@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Estimate average emotion expressed by faces</title>
+<script src="jsPsych/jspsych.js"></script>
+<script src="jsPsych/plugins/jspsych-html-keyboard-response.js"></script>
+<script src="jsPsych/plugins/jspsych-image-button-response.js"></script>
+<script src="jsPsych/plugins/jspsych-image-slider-response_noButton.js"></script>
+<script src="jsPsych/plugins/jspsych-instructions.js"></script>
+<script src="jsPsych/plugins/jspsych-survey-text.js"></script>
+<script src="jsPsych/plugins/jspsych-external-html.js"></script>
+
+<script src="jquery-3.3.1.min.js"></script>
+
+<script src="sad_sequential_task_functions.js"></script>
+
+<script src="aws-sdk-2.713.0.min.js"></script>
+<link	href="jsPsych/css/jspsych.css"	rel="stylesheet" type="text/css"></link>
+
+</head>
+
+<style>
+	.instructions_img {
+		border: solid 5px black;
+		width:  700px;
+	}
+	span.grid{
+		display: grid;
+		grid-template-columns: 120px 120px 120px 120px 120px;
+		grid-template-rows: 130px 130px 130px 130px 130px;
+	}
+
+	
+	body{
+		background-color: #AAAAAA;
+	}
+	
+	.jspsych-instructions-nav { margin-bottom: 100px; }
+	#consentDiv { font-size: 9pt; text-align: justify; }
+
+	.AngryA {
+		display: inline-block;
+		width: 53px;
+		height: 68px;
+		background-size: 5000% 100%;
+		background-image: url('A_Angry.jpg');
+		padding: 20px;
+	}
+	
+	.AngryB {
+		display: inline-block;
+		width: 53px;
+		height: 68px;
+		background-size: 5000% 100%;
+		background-image: url('B_Angry.jpg');
+		padding: 20px;
+	}
+	
+	
+	.AngryC {
+		display: inline-block;
+		width: 53px;
+		height: 68px;
+		background-size: 5000% 100%;
+		background-image: url('C_Angry.jpg');
+		padding: 20px;
+	}
+	
+	
+	.AngryD {
+		display: inline-block;
+		width: 53px;
+		height: 68px;
+		background-size: 5000% 100%;
+		background-image: url('D_Angry.jpg');
+		padding: 20px;
+	}
+
+	.HappyA {
+		display: inline-block;
+		width: 53px;
+		height: 68px;
+		background-size: 5000% 100%;
+		background-image: url('A_Happy.jpg');
+		padding: 20px;
+	}
+	
+	
+	.HappyB {
+		display: inline-block;
+		width: 53px;
+		height: 68px;
+		background-size: 5000% 100%;
+		background-image: url('B_Happy.jpg');
+		padding: 20px;
+	}
+	
+	
+	.HappyC {
+		display: inline-block;
+		width: 53px;
+		height: 68px;
+		background-size: 5000% 100%;
+		background-image: url('C_Happy.jpg');
+		padding: 20px;
+	}
+	
+	
+	.HappyD {
+		display: inline-block;
+		width: 53px;
+		height: 68px;
+		background-size: 5000% 100%;
+		background-image: url('D_Happy.jpg');
+		padding: 20px;
+	}
+
+	
+	.SadA {
+		display: inline-block;
+		width: 53px;
+		height: 68px;
+		background-size: 5000% 100%;
+		background-image: url('A_Sad.jpg');
+		padding: 20px;
+	}
+	
+	
+	.SadB {
+		display: inline-block;
+		width: 53px;
+		height: 68px;
+		background-size: 5000% 100%;
+		background-image: url('B_Sad.jpg');
+		padding: 20px;
+	}
+	
+	
+	.SadC {
+		display: inline-block;
+		width: 53px;
+		height: 68px;
+		background-size: 5000% 100%;
+		background-image: url('C_Sad.jpg');
+		padding: 20px;
+	}
+	
+	
+	.SadD {
+		display: inline-block;
+		width: 53px;
+		height: 68px;
+		background-size: 5000% 100%;
+		background-image: url('D_Sad.jpg');
+		padding: 20px;
+	}
+
+	
+	div.preload {
+		display: none;
+	}
+
+	span div {
+		width: 100px;
+	}
+	
+	
+	</style>
+
+
+<body>
+
+	<div class="preload">
+		<img src="A_Sad.jpg" />
+
+		<img src="B_Sad.jpg" />
+
+		<img src="C_Sad.jpg" />
+
+		<img src="D_Sad.jpg" />
+
+		<img src="A_Angry.jpg" />
+		<img src="A_Happy.jpg" />
+		<img src="B_Angry.jpg" />
+		<img src="B_Happy.jpg" />
+		<img src="C_Angry.jpg" />
+		<img src="C_Happy.jpg" />
+		<img src="D_Angry.jpg" />
+		<img src="D_Happy.jpg" />
+
+		
+	</div>
+
+</body>
+
+<script>
+/* Require a new-ish browser:
+------------------------------------------ */
+function supportsLiterals() {
+  try { return eval("''===``") }
+  catch(e) { return false; }
+}
+if (!supportsLiterals()) {
+	var txt = "Sorry, this experiment requires a newer browser, so yours is not able to be used. The latest Chrome, Firefox, Safari or Edge all work.";
+	alert(txt);
+	document.body.onload = function() { document.body.innerHTML = txt; };
+}
+
+/* Variables
+------------------------------------------ */
+
+var Face = {}; //create a data dictionary that will capture all of the data
+var pool = loadFacePool(1,150);
+Face.wordList = ['but','rock','sky','our','course','we','table','house','here','mouth','tree', 'hello'];
+var trialList = [];
+var total_trials = 50;
+var falseAnswer = 0; var falseAllowance = 4;  //attention check - the amount of time participants rate the same picture before they get an alert
+var repeatAlert = 0; var repeatAllowance = 2; //how many times they can get alerts before they are cicked out
+
+var trialCount = 0;
+function updateCounter() {
+	trialCount = trialCount+1;
+}
+
+var attentionStimulus = loadStimulus(2); 
+var imageTestDescription = attentionStimulus; 
+
+/* Instructions
+------------------------------------------ */
+
+
+trialList.push({ //comment out consent when testing locally
+    type:'external-html',
+    url: "external_page.html",
+    cont_btn: "start",
+    check_fn: check_consent
+  });
+
+trialList.push({
+	type: "instructions",
+	pages: [
+	"<p>This study aims to examine whether people can <b>estimate the <span style='color:red'>average</span> emotional expression</b> of multiple faces. In each trial, up to 12 faces expressing various degrees of emotion will appear on the screen.</p> <br> <img class = 'instructions_img' src='ins/happy_array.png'>",
+	"After the face group is displayed, one face will appear in the center of the screen. As you move your mouse, the face's expression will change gradually, from <b>neutral to emotional</b>. You must move the mouse until the face expresses the emotion that you think matches the <b>average</b> emotion in the face group you just saw. <br> <img class='instructions_img' src='ins/happy_scale.gif'>",
+	"Once you have reached your estimate, <b>click the mouse</b> to select your estimate and advance to the next trial.",
+	"Remember, the goal here is provide <strong>YOUR ESTIMATION of the <span style='color:red'>AVERAGE </span>EMOTIONAL RESPONSE </strong> of the faces you just saw.",
+	],  
+	show_clickable_nav: true,
+	
+}) // just happy for instructions
+
+
+trialList.push({
+    type: 'survey-text',
+    questions: [{prompt: "Please enter your Prolific ID (this will be used for validation purposes)"}],
+    on_finish: function(data){
+      Face.subject_id = JSON.parse(data.responses).Q0; // save id as global variable
+      jsPsych.data.addProperties({participant_id: Face.subject_id});} // add the participant column to all current and future data entries
+})
+
+
+var person = ["HappyA", "AngryA", "HappyB", "AngryB","HappyC", "AngryC", "HappyD","AngryD","HappyE", "AngryE", "HappyF", "AngryF","HappyG", "AngryG", "HappyH","AngryH"]
+var emotion_value = [...Array(50).keys()].map(function(item) { 
+    return item + 1; 
+});
+
+/* PRACTICE TRIALS
+------------------------------------------ */
+
+//word attentionCheck
+
+var askTypeWord = { //attention check - participants are asked to copy a word that appears on the screen
+    type: 'survey-text',
+    questions: function (){return [{prompt:'Please type the word: '+ getWord().bold() + '  (pay attention to capital letters)'}]},
+  };
+
+var attentionCheck = { //function for the attention check
+    timeline: [askTypeWord],
+    loop_function: checkTyping,
+    on_start: function(data){
+      saveDataToS3()}
+};
+
+var imageDescription = {
+    type: 'survey-text',
+    questions: [{prompt: "Please describe the picture in your own words"}],
+    preamble: function() {
+      var curr_stim = imageTestDescription.shift()
+      return '<img src='+curr_stim+'></img>';
+    },
+    on_finish: function(data){
+      saveDataToS3()
+      Face.description = JSON.parse(data.responses).Q0; },
+	on_start: function(data){
+		saveDataToS3()
+	} //save description
+  };
+
+
+trialList.push({
+	type:"instructions",
+	pages:['You will begin with 3 practice trials.'],
+	show_clickable_nav: true
+});
+
+trialList.push(imageDescription);
+
+
+
+for (let dd = 0; dd < 3; dd++) {
+
+	if (dd == 0){trialList.push(attentionCheck)
+
+	}
+
+trialList.push({ //getting new fixation time and face
+  type: 'html-keyboard-response',
+  stimulus: '<p style="font-size: 48px;"> + </p>',
+  trial_duration:  getTimeAndFace,  //random select fixation time
+  data: {Name:'fixation'}
+});
+
+
+trialList.push({                //there is an array of randomly selected pictures//
+  type: 'html-keyboard-response',
+  stimulus:  getFaceSample,
+  trial_duration: 1500,  //display faces for 1.5 second
+  choices: jsPsych.NO_KEYS,
+  // data: function(){Name:'singleFace',
+  // //add data of the single face to face pool
+  // Face.facePool.push(Face.singleFace)},
+});
+
+trialList.push({ //participants see a slider and asked to estimate the mean group emotion
+  type: 'image-slider-response_noButton',
+  stimulus: getScale,
+  prompt: "<p>Estimate the average emotion of the faces you just viewed</p>",
+  step:1,
+  max:50,
+  start: 0,
+  on_load: morphedScale,
+  data: function(){
+	  updateCounter()
+  return {
+    Name: 'response',
+	fixationTime: Face.fixationTime,
+	faceIdentity: Face.personX,
+	array_length: Face.array_length,
+	array_values: String(Face.array_values),
+	valence: Face.valence,
+    description: Face.description,
+  //   face_1:(Face.emotionX + Face.singleFace),
+	trial: trialCount,
+	}
+	
+  },
+  on_finish: function(){
+	if (trialCount % 10 == 0) saveDataToS3();
+	if (trialCount == 53) saveDataToS3();
+
+  }
+
+});
+
+}
+
+
+trialList.push({
+	type:"instructions",
+	pages:['You completed the practice. Now you will complete 50 real trials.'],
+	show_clickable_nav: true
+})
+
+
+for (let dd = 0; dd < (total_trials); dd++) {
+
+	if (dd % 5 == 0){
+		trialList.push(attentionCheck)
+	}
+
+  trialList.push({ //getting new fixation time and face
+    type: 'html-keyboard-response',
+    stimulus: '<p style="font-size: 48px;"> + </p>',
+    trial_duration:  getTimeAndFace,  //random select fixation time
+    data: {Name:'fixation'}
+  });
+
+
+  trialList.push({                //there is an array of randomly selected pictures//
+    type: 'html-keyboard-response',
+    stimulus:  getFaceSample,
+    trial_duration: 1500,  //display faces for 1.5 second
+    choices: jsPsych.NO_KEYS,
+    // data: function(){Name:'singleFace',
+    // //add data of the single face to face pool
+    // Face.facePool.push(Face.singleFace)},
+  });
+
+  trialList.push({ //participants see a slider and asked to estimate the mean group emotion
+    type: 'image-slider-response_noButton',
+    stimulus: getScale,
+    prompt: "<p>Estimate the average emotion of the faces you just viewed</p>",
+    step:1,
+    max:50,
+    start: 0,
+    on_load: morphedScale,
+    data: function(){
+    	updateCounter()
+    return {
+      Name: 'response',
+      fixationTime: Face.fixationTime,
+      faceIdentity: Face.personX,
+	  array_length: Face.array_length,
+	  array_values: Face.array_values,
+	  valence: Face.valence,
+      description: Face.description,
+    //   face_1:(Face.emotionX + Face.singleFace),
+      trial: trialCount,
+      }
+    },
+	
+  on_finish: function(){
+	if (trialCount % 10 == 0) saveDataToS3();
+	if (trialCount == 53) saveDataToS3();
+	
+  }
+  
+});
+
+}
+
+trialList.push(imageDescription);
+trialList.push({
+	type:"instructions",
+	pages:["You're done with the task! Click 'next' to proceed to the survey"],
+	show_clickable_nav: true,
+	on_start: function(data){
+		saveDataToS3()
+	},
+	on_finish: function(data){
+		saveDataToS3()
+	}
+})
+
+
+  /******************************************/
+  /*           run the study                */
+  /******************************************/
+  
+jsPsych.init({
+	timeline: trialList,
+	preload_images: pool,
+	use_webaudio: false,
+	experiment_width: 750,
+	exclusions: {
+		min_width: 700,
+		min_height: 500
+	},
+	on_close: function(){
+		saveDataToS3()
+	},
+	on_finish: function(){
+		saveDataToS3();
+		window.location = "https://hbs.qualtrics.com/jfe/form/SV_292X3pSH9DbSx2C" //amplification sad pilot 2021
+	}
+
+});
+
+</script>
+</html>
